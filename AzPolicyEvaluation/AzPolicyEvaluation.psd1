@@ -30,7 +30,7 @@
     Copyright         = '(c) Microsoft. All rights reserved.'
 
     # Description of the functionality provided by this module
-    # Description = ''
+    Description       = 'Trigger evaluation of Azure Policy on a subscrption or resource group'
 
     # Minimum version of the PowerShell engine required by this module
     # PowerShellVersion = ''
