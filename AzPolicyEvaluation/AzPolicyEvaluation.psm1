@@ -1,5 +1,6 @@
 function Start-AzPolicyEvaluation {
-    Param($ResourceGroup)
+    [CmdletBinding()]
+    Param($ResourceGroup, [switch]$Wait)
 
     try {
         $token = Get-AzToken
@@ -18,13 +19,42 @@ function Start-AzPolicyEvaluation {
     $method = "POST"
 
     try {
+        Write-Verbose -Message "Sending Web Request"
         $response = Invoke-WebRequest -Method $method `
             -Uri $uri `
             -Headers @{ "Authorization" = "Bearer " + $token.Token } -UseBasicParsing -ErrorAction Stop
         Write-Output $response.StatusDescription
+        if (!($PSBoundParameters.ContainsKey('Wait'))) {
+            $obj = [PSCustomObject]@{
+                StatusCode        = $response.StatusCode
+                StatusDescription = $response.StatusDescription
+            }
+            return $obj
+        }
     }   
     catch {
         throw $Error[0].Exception.Message
+    }
+
+    if ($PSBoundParameters.ContainsKey('Wait')) {
+        Write-Verbose "Waiting for policy to finish evaluating"
+        $locationURI = "$($response.Headers.Location)"
+        do {
+            $response = Invoke-WebRequest -Uri $locationURI `
+                -Headers @{ "Authorization" = "Bearer " + $token.Token } -UseBasicParsing -ErrorAction Stop
+            Write-Verbose "x-ms-ratelimit-remaining-subscription-policy-insights-requests: $($response.Headers.'x-ms-ratelimit-remaining-subscription-policy-insights-requests')"
+            Write-Verbose "$($response.StatusCode) - $($response.StatusDescription)"
+            Start-Sleep -Seconds 30
+
+        }
+        while (($response.StatusCode -eq 202) -and ($response.StatusDescription -eq 'Accepted'))
+
+        $obj = [PSCustomObject]@{
+            StatusCode        = $response.StatusCode
+            StatusDescription = $response.StatusDescription
+        }
+        return $obj
+        
     }
 }
 
