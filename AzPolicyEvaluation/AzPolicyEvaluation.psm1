@@ -23,7 +23,7 @@ function Start-AzPolicyEvaluation {
         $response = Invoke-WebRequest -Method $method `
             -Uri $uri `
             -Headers @{ "Authorization" = "Bearer " + $token.Token } -UseBasicParsing -ErrorAction Stop
-        Write-Output $response.StatusDescription
+        
         if (!($PSBoundParameters.ContainsKey('Wait'))) {
             $obj = [PSCustomObject]@{
                 StatusCode        = $response.StatusCode
