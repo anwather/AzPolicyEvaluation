@@ -37,6 +37,7 @@ function Start-AzPolicyEvaluation {
     }
 
     if ($PSBoundParameters.ContainsKey('Wait')) {
+        $startTime = Get-Date
         Write-Verbose "Waiting for policy to finish evaluating"
         $locationURI = "$($response.Headers.Location)"
         do {
@@ -48,10 +49,11 @@ function Start-AzPolicyEvaluation {
 
         }
         while (($response.StatusCode -eq 202) -and ($response.StatusDescription -eq 'Accepted'))
-
+        $endMinutes = ((Get-Date) - $startTime).Minutes
         $obj = [PSCustomObject]@{
             StatusCode        = $response.StatusCode
             StatusDescription = $response.StatusDescription
+            ElapsedTime       = "$endMinutes minutes"
         }
         return $obj
         
