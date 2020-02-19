@@ -3,7 +3,19 @@ function Start-AzPolicyEvaluation {
     Param($ResourceGroup, [switch]$Wait)
 
     try {
-        $token = Get-AzToken
+        if ($env:MSI_ENDPOINT) {
+            $response = Invoke-WebRequest -Uri "$env:MSI_ENDPOINT/?resource=https://management.azure.com/" -Headers @{"Metadata" = "true" }
+            $ctx = Get-AzContext
+            $token = [PSCustomObject]@{
+                SubscriptionId = $ctx.Subscription
+                TenantID       = $env:ACC_TID
+                Token          = ($response.content | ConvertFrom-Json | Select-Object -ExpandProperty access_token)
+            }
+        }
+        else {
+            $token = Get-AzToken
+        }
+        
     }
     catch {
         throw "You must be logged in to Azure - Use Connect-AzAccount to connect."
